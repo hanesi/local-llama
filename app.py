@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from llama_cpp import Llama
 import os
 
-model_path = os.getenv("MODEL_PATH", "models/llama-2-7b-chat.Q4_K_M.gguf")
+model_path = "models/llama-2-7b-chat.Q4_K_M.gguf"
 
 # You can tune these based on the instance
 llm = Llama(
