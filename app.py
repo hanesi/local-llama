@@ -1,33 +1,22 @@
 from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from llama_cpp import Llama
+import os
 
-app = FastAPI()
+model_path = os.getenv("MODEL_PATH", "models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf")
 
-# Mount static files (CSS/JS if needed)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Set up Jinja2 templates
-templates = Jinja2Templates(directory="templates")
-
-# Load the model once
+# You can tune these based on the instance
 llm = Llama(
-    model_path="./models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf",
+    model_path=model_path,
     n_ctx=2048,
     n_threads=8,
-    n_gpu_layers=20
+    n_gpu_layers=0  # Set >0 if you use a GPU
 )
 
-@app.get("/", response_class=HTMLResponse)
-async def get_chat(request: Request):
-    return templates.TemplateResponse("chat.html", {"request": request})
+app = FastAPI()
 
 @app.post("/ask")
 async def ask(request: Request):
     data = await request.json()
-    prompt = data["message"]
-
-    response = llm(prompt=prompt, max_tokens=256)
-    return {"response": response["choices"][0]["text"].strip()}
+    prompt = data.get("prompt", "")
+    result = llm(prompt, max_tokens=128, temperature=0.7)
+    return {"response": result["choices"][0]["text"]}
